@@ -1,3 +1,4 @@
-17 5
-D A E S T E G G E C D E F G G C D
-T E S T E
+10 3
+A E D E A F G C A B
+D E A
+

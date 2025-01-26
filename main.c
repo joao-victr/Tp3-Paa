@@ -28,7 +28,5 @@ int main(int argc, char* argv[]){
     //     k++;
     // }
     // printf("\n");
-
-    boyer_moore_horspool(m, music, t, pattern);
     return 0;
 }

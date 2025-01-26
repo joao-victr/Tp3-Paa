@@ -72,3 +72,40 @@ int boyer_moore_horspool(int m,  char** music, int t, char** pattern){
     printf("\n");
     return 0;
 }
+
+Note* get_alphabet(){
+    static Note alphabet[21] = {
+        {"Ab", 0}, {"A", 0}, {"A#", 0}, {"Bb", 0}, {"B", 0}, {"B#", 0}, {"Cb", 0}, {"C", 0},
+        {"C#", 0}, {"Db", 0}, {"D", 0}, {"D#", 0}, {"Eb", 0}, {"E", 0}, {"E#", 0}, {"Fb", 0}, {"F", 0},
+        {"F#", 0}, {"Gb", 0}, {"G", 0}, {"G#", 0}
+    };
+    return alphabet;
+}
+
+int shift_and(char** music, int music_len, char** pattern, int pattern_len){
+    Note* alphabet = get_alphabet();
+    for(int i = 0; i < pattern_len; i++){
+        for(int j = 0; j < 21; j++){
+            if(!strcmp(pattern[i], alphabet[j].note)){
+                alphabet[j].bitmask |= (1 << i);
+                break;
+            }
+        }
+    }
+
+    printf("len = %d\n", music_len);
+    unsigned int R = 0, mask = 1 << (pattern_len - 1), current_mask;
+    for(int i = 0; i < music_len; i++){
+        for(int j = 0; j < 21; j++){
+            if(!strcmp(music[i], alphabet[j].note)){
+                current_mask = alphabet[j].bitmask;
+                break;
+            }
+        }
+        R = ((R << 1) | 1) & current_mask;
+        if(R & mask){
+            printf("Casamento na posicao %d\n", i - pattern_len + 1);
+        }
+    }
+}
+
