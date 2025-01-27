@@ -20,4 +20,8 @@ Note* get_alphabet();
 
 int shift_and(char** music, int music_len, char** pattern, int pattern_len);
 
+int knuth_morris_pratt(char** music, int music_len, char** pattern, int pattern_len);
+
+int knuth_morris_pratt(char** music, int music_len, char** pattern, int pattern_len);
+
 #endif

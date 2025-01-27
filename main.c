@@ -12,12 +12,12 @@ int main(int argc, char* argv[]){
     int m, t;
 
     read_test_case(input_file, &music, &m, &pattern, &t);
-    printf("M = %d\nT = %d\n", m, t);
-    for(int i = 0; i < m; i++){
-        printf("%s ", music[i]);
-    }
-    printf("\n\n");
-    int k = 0;
+    // printf("M = %d\nT = %d\n", m, t);
+    // for(int i = 0; i < m; i++){
+    //     printf("%s ", music[i]);
+    // }
+    // printf("\n\n");
+    // int k = 0;
     // while(k < 12){
     //     for(int i = 0; i < t; i++){
     //         printf("%s ", pattern[i]);
@@ -28,5 +28,6 @@ int main(int argc, char* argv[]){
     //     k++;
     // }
     // printf("\n");
+    knuth_morris_pratt(music, m, pattern, t);
     return 0;
 }

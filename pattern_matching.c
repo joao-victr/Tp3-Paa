@@ -109,3 +109,39 @@ int shift_and(char** music, int music_len, char** pattern, int pattern_len){
     }
 }
 
+int knuth_morris_pratt(char** music, int music_len, char** pattern, int pattern_len){
+    int stack_len = music_len + pattern_len + 2;
+    char** stack = (char**)malloc((stack_len) * sizeof(char*));
+    for(int i = 0; i < stack_len; i++){
+        stack[i] = (char*)malloc(3 * sizeof(char));
+    }
+
+    strcpy(stack[0], "&");
+    int i, j, top;
+    for(i = 1; i < music_len + 1; i++){
+        strcpy(stack[i], music[i - 1]);
+    }
+    j = i;
+    strcpy(stack[i], "$");
+    for(i += 1; i < pattern_len + music_len + 2; i++){
+        strcpy(stack[i], pattern[i - music_len - 2]);
+    }
+    top = i;
+    int k;
+    while(strcmp(stack[j], "&")){
+        i = top - 1;
+        k = j;
+        while(!strcmp(stack[k], stack[i])){            
+            printf("j = %d\ni = %d\n", j, i);
+            i--;
+            k--;
+            if(!strcmp(stack[i], "$")){
+                printf("Casamento na posicao %d\n", k);
+                return k;
+            }
+        }
+        j--;
+    }
+
+
+}
