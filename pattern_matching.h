@@ -10,18 +10,16 @@ typedef struct Note{
     unsigned int bitmask;
 } Note;
 
-int brute_force(int m,  char** music, int t, char** pattern);
+int brute_force(int m,  char** music, int t, int* pattern_int_array);
 
-char** increase_tune(char** pattern, int len);
+int boyer_moore_horspool(int music_len, char** music, int pattern_len, int* pattern_int_array);
 
-int boyer_moore_horspool(int m,  char** music, int t, char** pattern);
+int shift_and(char** music, int music_len, int* pattern_int_array, int pattern_len);
 
-Note* get_alphabet();
+int knuth_morris_pratt(char** music, int music_len, int* pattern, int pattern_len);
 
-int shift_and(char** music, int music_len, char** pattern, int pattern_len);
+int map_to_int(char* note);
 
-int knuth_morris_pratt(char** music, int music_len, char** pattern, int pattern_len);
-
-int knuth_morris_pratt(char** music, int music_len, char** pattern, int pattern_len);
+void increase_tune(int* pattern_int_array, int pattern_len);
 
 #endif

@@ -34,10 +34,12 @@ char** split(char* str){
 }
 
 void read_test_case(FILE* input_file, char*** music, int *m, char*** pattern, int *t){
-    char str[10];
-    fgets(str, 10, input_file);
-    *m = atoi(&str[0]);
-    *t = atoi(&str[3]);
+    char str[20];
+    fgets(str, 20, input_file);
+    char* token = strtok(str, " ");
+    *m = atoi(token);
+    token = strtok(NULL, " ");
+    *t = atoi(token);
 
     int len = *m * 4 + 1;
     char* music_line = (char*)malloc(len);

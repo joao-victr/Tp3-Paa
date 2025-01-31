@@ -1,147 +1,146 @@
 #include "pattern_matching.h"
+#include <stdint.h>
 
-//Aumenta um semitom em pattern
-char** increase_tune(char** pattern, int len){
-    char notes[12][3] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-    char** new_pattern = (char**)malloc(len * sizeof(char*));
-    for(int i = 0 ; i < len; i++){
-        new_pattern[i] = (char*)malloc(3);
+
+int map_to_int(char* note){
+        if(!strcmp(note, "A")) return 0;
+        else if(!strcmp(note, "A#") || !strcmp(note, "Bb")) return 1;
+        else if(!strcmp(note, "B") || !strcmp(note, "Cb")) return 2;
+        else if(!strcmp(note, "B#") || !strcmp(note, "C")) return 3;
+        else if(!strcmp(note, "C#") || !strcmp(note, "Db")) return 4;
+        else if(!strcmp(note, "D")) return 5;
+        else if(!strcmp(note, "D#") || !strcmp(note, "Eb")) return 6;
+        else if(!strcmp(note, "E") || !strcmp(note, "Fb")) return 7;
+        else if(!strcmp(note, "E#") || !strcmp(note, "F")) return 8;
+        else if(!strcmp(note, "F#") || !strcmp(note, "Gb")) return 9;
+        else if(!strcmp(note, "G")) return 10;
+        else if(!strcmp(note, "G#") || !strcmp(note, "Ab")) return 11;
+}
+
+void increase_tune(int* pattern_int_array, int pattern_len){
+    for(int i = 0; i < pattern_len; i++){
+        pattern_int_array[i] = (pattern_int_array[i] + 1) % 12;
     }
-    for(int i = 0; i < len; i++){
-        for(int j = 0; j < 12; j++){
-            if(!strcmp(pattern[i], notes[j])) {
-                new_pattern[i] = strdup(notes[(j + 1) % 12]);
-                break;
-            }
-        }
-    }
-    
-    free(pattern);
-    return new_pattern;
 }
 
 //Algoritmo de forca bruta para casamento de padrao
-int brute_force(int m,  char** music, int t, char** pattern){
-    int j, k;
+int brute_force(int m,  char** music, int t, int* pattern_int_array){
+    int j, k, distance;
     for(int i = 0; i <= m - t; i++){
         k = i;
         j = 0;
-        while(!strcmp(music[k],pattern[j])){
+        int distance = (map_to_int(music[i]) - pattern_int_array[0] + 12) % 12;
+        while((map_to_int(music[k]) - pattern_int_array[j] + 12) % 12 == distance){
             j += 1;
             k += 1;
             if(j == t){
-                printf("Casamento na posicao %d\n", i);
+                printf("S %d\n", i);
                 return i;
             }
         }
     }
-    printf("Padrao nao encontrado\n");
+    printf("N\n");
     return -1;
 }
 
-int boyer_moore_horspool(int m,  char** music, int t, char** pattern){
-    int* d = (int*)malloc(t * sizeof(int));
-    for(int i = 0; i < t; i++){
-        d[i] = t;
+void preprocess_shift_table(int* pattern, int pattern_len, int* shift_table) {
+    for (int i = 0; i < 12; i++) {
+        shift_table[i] = pattern_len;
     }
-    for(int i = 0; i < t - 1; i++){
-       d[i] = t + 1 - i; 
+    for (int i = 0; i < pattern_len - 1; i++) {
+        shift_table[pattern[i]] = pattern_len - 1 - i;
     }
-    for(int i = 0; i < t; i++){
-        printf("%d ", d[i]);
-    }
-    int i = t, k, j;
-    printf("LOG\n");
-    while(i <= m){
-        k = i;
-        j = t;
-        printf("j = %d\nk = %d\n", j , k);
-        while(!strcmp(music[k], pattern[j - 1]) && j > 0){
-            k -= 1;
-            j -= 1;
-            printf("i = %d\n", i);
-            if(j == 0){
-                printf("Casamento na posicao %d\n", k + 1);
-                return k + 1;
-            }
+}
+
+int boyer_moore_horspool(int music_len, char** music, int pattern_len, int* pattern_int_array) {
+    int shift_table[12];
+    preprocess_shift_table(pattern_int_array, pattern_len, shift_table);
+    int i = 0;
+    while (i <= music_len - pattern_len) {
+        int j = pattern_len - 1;
+        
+        while (j >= 0 && map_to_int(music[i + j]) == pattern_int_array[j]) {
+            j--;
         }
-        printf("d = %d\n", d[t - 1]);
-        i += d[t - 1];
-
+        if (j < 0) {
+            return i;
+        }
+        i += shift_table[map_to_int(music[i + pattern_len - 1])];
     }
-    printf("\n");
-    return 0;
+    return -1;
 }
 
-Note* get_alphabet(){
-    static Note alphabet[21] = {
-        {"Ab", 0}, {"A", 0}, {"A#", 0}, {"Bb", 0}, {"B", 0}, {"B#", 0}, {"Cb", 0}, {"C", 0},
-        {"C#", 0}, {"Db", 0}, {"D", 0}, {"D#", 0}, {"Eb", 0}, {"E", 0}, {"E#", 0}, {"Fb", 0}, {"F", 0},
-        {"F#", 0}, {"Gb", 0}, {"G", 0}, {"G#", 0}
-    };
-    return alphabet;
-}
+int shift_and(char** music, int music_len, int* pattern_int_array, int pattern_len) {
+    int num_blocks = (pattern_len + 1) / 64, counter = 0, k = 0;
+    unsigned long long table[12][num_blocks];
+    unsigned long long R[num_blocks];
+    memset(table, 0, sizeof(table));
+    memset(R, 0, sizeof(R));
 
-int shift_and(char** music, int music_len, char** pattern, int pattern_len){
-    Note* alphabet = get_alphabet();
+    int block, offset;
     for(int i = 0; i < pattern_len; i++){
-        for(int j = 0; j < 21; j++){
-            if(!strcmp(pattern[i], alphabet[j].note)){
-                alphabet[j].bitmask |= (1 << i);
-                break;
-            }
-        }
+        block = i / 64;
+        offset = i % 64;
+        table[pattern_int_array[i]][block] |= (1ULL << offset);
     }
 
-    printf("len = %d\n", music_len);
-    unsigned int R = 0, mask = 1 << (pattern_len - 1), current_mask;
     for(int i = 0; i < music_len; i++){
-        for(int j = 0; j < 21; j++){
-            if(!strcmp(music[i], alphabet[j].note)){
-                current_mask = alphabet[j].bitmask;
-                break;
-            }
+        int char_index = pattern_int_array[i];
+        uint64_t carry = 1;
+        for (int j = 0; j < num_blocks; j++) {
+            unsigned long long prev_carry = carry;
+            carry = (R[i] >> 63) & 1ULL;
+            R[i] = ((R[i] << 1) | prev_carry) & table[char_index][i];
         }
-        R = ((R << 1) | 1) & current_mask;
-        if(R & mask){
-            printf("Casamento na posicao %d\n", i - pattern_len + 1);
+        if (R[(pattern_len - 1) / 64] & (1ULL << ((pattern_len - 1) % 64))) {
+            printf("pat_len: %d\ni: %d\n", pattern_len, i);
+            return i - pattern_len + 1;  // Retorna posição inicial do casamento
+        }
+    }
+    return -1;
+}
+
+void get_prefix_array(int* pattern_int_array, int pattern_len, int* prefix_array){
+    int length = 0;
+    prefix_array[0] = 0;
+    int i = 1;
+    while (i < pattern_len){
+        if (pattern_int_array[i] == pattern_int_array[length]){
+            length++;
+            prefix_array[i] = length;
+            i++;
+        }else{
+            if(length != 0){
+                length = prefix_array[length - 1];
+            }else{
+                prefix_array[i] = 0;
+                i++;
+            }
         }
     }
 }
 
-int knuth_morris_pratt(char** music, int music_len, char** pattern, int pattern_len){
-    int stack_len = music_len + pattern_len + 2;
-    char** stack = (char**)malloc((stack_len) * sizeof(char*));
-    for(int i = 0; i < stack_len; i++){
-        stack[i] = (char*)malloc(3 * sizeof(char));
-    }
 
-    strcpy(stack[0], "&");
-    int i, j, top;
-    for(i = 1; i < music_len + 1; i++){
-        strcpy(stack[i], music[i - 1]);
-    }
-    j = i;
-    strcpy(stack[i], "$");
-    for(i += 1; i < pattern_len + music_len + 2; i++){
-        strcpy(stack[i], pattern[i - music_len - 2]);
-    }
-    top = i;
-    int k;
-    while(strcmp(stack[j], "&")){
-        i = top - 1;
-        k = j;
-        while(!strcmp(stack[k], stack[i])){            
-            printf("j = %d\ni = %d\n", j, i);
-            i--;
-            k--;
-            if(!strcmp(stack[i], "$")){
-                printf("Casamento na posicao %d\n", k);
-                return k;
+int knuth_morris_pratt(char** music, int music_len, int* pattern_int_array, int pattern_len){
+    int* prefix_array = (int*)malloc(pattern_len * sizeof(int));
+    get_prefix_array(pattern_int_array, pattern_len, prefix_array);
+    int i = 0;
+    int j = 0;
+    while(i < music_len){
+        if(pattern_int_array[j] == map_to_int(music[i])){
+            i++;
+            j++;
+        }
+        if(j == pattern_len){
+            return i - j;
+        }else if(i < music_len && pattern_int_array[j] != map_to_int(music[i])){
+            if (j != 0){
+                j = prefix_array[j - 1];
+            }else{
+                i++;
             }
         }
-        j--;
     }
-
-
+    free(prefix_array);
+    return -1;
 }
