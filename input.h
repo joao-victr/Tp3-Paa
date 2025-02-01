@@ -11,7 +11,7 @@ void get_input(int argc, char* argv[], FILE** input_file, int* method);
 
 char** split(char* str);
 
-int read_test_case(FILE* input_file, char*** music, int *m, char*** pattern, int *t);
+int read_test_case(FILE* input_file, char*** music, int *m, char*** pattern, int *t, char** music_buffer, char** pattern_buffer);
 
 
 #endif

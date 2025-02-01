@@ -13,7 +13,8 @@ int main(int argc, char* argv[]){
     int music_len, pattern_len, k = 0, succes = 0;
     int eof = 0;
     while(1){
-        eof = read_test_case(input_file, &music, &music_len, &pattern, &pattern_len);
+        char *music_line = NULL, *pattern_line = NULL;
+        eof = read_test_case(input_file, &music, &music_len, &pattern, &pattern_len, &music_line, &pattern_line);
         if(eof) break;
         int* pattern_int_array = (int*)malloc(pattern_len * sizeof(int));
         for(int i = 0; i < pattern_len; i++){
@@ -45,10 +46,13 @@ int main(int argc, char* argv[]){
             fprintf(output_file, "N\n");
         }
         free(pattern_int_array);
+        free(music_line);
+        free(pattern_line);
+        free(music);
+        free(pattern);
         k++;
     }
     fclose(input_file);
     fclose(output_file);
-    
     return 0;
 }
