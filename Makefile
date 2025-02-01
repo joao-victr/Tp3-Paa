@@ -1,8 +1,6 @@
-EXEC = main
+EXEC = tp3
 COMPILER = gcc
 OBJECTS = main.o input.o pattern_matching.o
-input_file =music.txt
-method = 1
 
 all: $(OBJECTS)
 	$(COMPILER) $(OBJECTS) -o $(EXEC)
@@ -18,9 +16,3 @@ pattern_matching.o: pattern_matching.c
 
 clean: 
 	rm -rf *.o $(EXEC)
-
-run: $(EXEC)
-	./$(EXEC) -a $(input_file) -b $(method)
-
-val: $(EXEC)
-	valgrind ./$(EXEC) -a $(input_file) -b $(method)

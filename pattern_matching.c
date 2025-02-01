@@ -1,7 +1,7 @@
 #include "pattern_matching.h"
 #include <stdint.h>
 
-
+//Mapeia a nota passada como parametro para um numero inteiro
 int map_to_int(char* note){
         if(!strcmp(note, "A")) return 0;
         else if(!strcmp(note, "A#") || !strcmp(note, "Bb")) return 1;
@@ -17,13 +17,14 @@ int map_to_int(char* note){
         else if(!strcmp(note, "G#") || !strcmp(note, "Ab")) return 11;
 }
 
+//Sobe o tom do padrao em um semitom
 void increase_tune(int* pattern_int_array, int pattern_len){
     for(int i = 0; i < pattern_len; i++){
         pattern_int_array[i] = (pattern_int_array[i] + 1) % 12;
     }
 }
 
-//Algoritmo de forca bruta para casamento de padrao
+//Algoritmo forca bruta
 int brute_force(int music_len,  char** music, int pattern_len, int* pattern_int_array){
     int j, k;
     for(int i = 0; i <= music_len - pattern_len; i++){
@@ -40,6 +41,7 @@ int brute_force(int music_len,  char** music, int pattern_len, int* pattern_int_
     return -1;
 }
 
+//Computa a tabela de deslocamentos do BMH
 void preprocess_shift_table(int* pattern, int pattern_len, int* shift_table) {
     for (int i = 0; i < 12; i++) {
         shift_table[i] = pattern_len;
@@ -49,18 +51,18 @@ void preprocess_shift_table(int* pattern, int pattern_len, int* shift_table) {
     }
 }
 
-int boyer_moore_horspool(int music_len, char** music, int pattern_len, int* pattern_int_array) {
+//Algoritmo Boyer-Moore-Horspool
+int boyer_moore_horspool(int music_len, char** music, int pattern_len, int* pattern_int_array){
     int shift_table[12];
     preprocess_shift_table(pattern_int_array, pattern_len, shift_table);
-    
     int i = 0;
-    while (i <= music_len - pattern_len) {
+    while (i <= music_len - pattern_len){
         int j = pattern_len - 1;
         
-        while (j >= 0 && map_to_int(music[i + j]) == pattern_int_array[j]) {
+        while(j >= 0 && map_to_int(music[i + j]) == pattern_int_array[j]){
             j--;
         }
-        if (j < 0) {
+        if(j < 0){
             return i;
         }
         i += shift_table[map_to_int(music[i + pattern_len - 1])];
@@ -68,7 +70,8 @@ int boyer_moore_horspool(int music_len, char** music, int pattern_len, int* patt
     return -1;
 }
 
-int shift_and(char** music, int music_len, int* pattern_int_array, int pattern_len) {
+//Algoritmo Shift-And
+int shift_and(char** music, int music_len, int* pattern_int_array, int pattern_len){
     if(!music_len || !pattern_len) return -1;
     int num_blocks = (pattern_len + 63) / 64;
     uint64_t** table = (uint64_t**)malloc(12 * sizeof(uint64_t*));
@@ -86,7 +89,7 @@ int shift_and(char** music, int music_len, int* pattern_int_array, int pattern_l
     for(int i = 0; i < music_len; i++){
         int note_index = map_to_int(music[i]);
         carry = 1ULL;
-        for (int j = 0; j < num_blocks; j++) {
+        for(int j = 0; j < num_blocks; j++){
             R[j] = (R[j] << 1);
             if(j == num_blocks - 1) R[j] |= 1ULL;
             carry = (R[j + 1] >> 63);
@@ -95,7 +98,7 @@ int shift_and(char** music, int music_len, int* pattern_int_array, int pattern_l
         int last_block = (pattern_len - 1) / 64;
         int last_bit = (pattern_len - 1) % 64;
         if(R[last_block] & (1ULL << last_bit)){
-            for(int i = 0; i < 12; i++) {
+            for(int i = 0; i < 12; i++){
                 free(table[i]);
             }
             free(table);
@@ -111,12 +114,13 @@ int shift_and(char** music, int music_len, int* pattern_int_array, int pattern_l
     return -1;
 }
 
+//Computa o array de prefixos do KMP
 void get_prefix_array(int* pattern_int_array, int pattern_len, int* prefix_array){
     int length = 0;
     prefix_array[0] = 0;
     int i = 1;
-    while (i < pattern_len){
-        if (pattern_int_array[i] == pattern_int_array[length]){
+    while(i < pattern_len){
+        if(pattern_int_array[i] == pattern_int_array[length]){
             length++;
             prefix_array[i] = length;
             i++;
@@ -131,7 +135,7 @@ void get_prefix_array(int* pattern_int_array, int pattern_len, int* prefix_array
     }
 }
 
-
+//Algoritmo Knuth-Morris-Pratt
 int knuth_morris_pratt(char** music, int music_len, int* pattern_int_array, int pattern_len){
     int* prefix_array = (int*)malloc(pattern_len * sizeof(int));
     get_prefix_array(pattern_int_array, pattern_len, prefix_array);
@@ -143,6 +147,7 @@ int knuth_morris_pratt(char** music, int music_len, int* pattern_int_array, int 
             j++;
         }
         if(j == pattern_len){
+            free(prefix_array);
             return i - j;
         }else if(i < music_len && pattern_int_array[j] != map_to_int(music[i])){
             if (j != 0){
