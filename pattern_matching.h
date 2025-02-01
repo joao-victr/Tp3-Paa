@@ -10,7 +10,7 @@ typedef struct Note{
     unsigned int bitmask;
 } Note;
 
-int brute_force(int m,  char** music, int t, int* pattern_int_array);
+int brute_force(int music_len,  char** music, int pattern_len, int* pattern_int_array);
 
 int boyer_moore_horspool(int music_len, char** music, int pattern_len, int* pattern_int_array);
 

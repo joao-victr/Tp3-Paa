@@ -24,22 +24,19 @@ void increase_tune(int* pattern_int_array, int pattern_len){
 }
 
 //Algoritmo de forca bruta para casamento de padrao
-int brute_force(int m,  char** music, int t, int* pattern_int_array){
-    int j, k, distance;
-    for(int i = 0; i <= m - t; i++){
+int brute_force(int music_len,  char** music, int pattern_len, int* pattern_int_array){
+    int j, k;
+    for(int i = 0; i <= music_len - pattern_len; i++){
         k = i;
         j = 0;
-        int distance = (map_to_int(music[i]) - pattern_int_array[0] + 12) % 12;
-        while((map_to_int(music[k]) - pattern_int_array[j] + 12) % 12 == distance){
+        while(map_to_int(music[k]) == pattern_int_array[j]){
             j += 1;
             k += 1;
-            if(j == t){
-                printf("S %d\n", i);
+            if(j == pattern_len){
                 return i;
             }
         }
     }
-    printf("N\n");
     return -1;
 }
 
@@ -55,6 +52,7 @@ void preprocess_shift_table(int* pattern, int pattern_len, int* shift_table) {
 int boyer_moore_horspool(int music_len, char** music, int pattern_len, int* pattern_int_array) {
     int shift_table[12];
     preprocess_shift_table(pattern_int_array, pattern_len, shift_table);
+    
     int i = 0;
     while (i <= music_len - pattern_len) {
         int j = pattern_len - 1;
@@ -71,32 +69,45 @@ int boyer_moore_horspool(int music_len, char** music, int pattern_len, int* patt
 }
 
 int shift_and(char** music, int music_len, int* pattern_int_array, int pattern_len) {
-    int num_blocks = (pattern_len + 1) / 64, counter = 0, k = 0;
-    unsigned long long table[12][num_blocks];
-    unsigned long long R[num_blocks];
-    memset(table, 0, sizeof(table));
-    memset(R, 0, sizeof(R));
-
+    if(!music_len || !pattern_len) return -1;
+    int num_blocks = (pattern_len + 63) / 64;
+    uint64_t** table = (uint64_t**)malloc(12 * sizeof(uint64_t*));
+    for(int i = 0; i < 12; i++){
+        table[i] = (uint64_t*)calloc(num_blocks, sizeof(uint64_t));
+    }
+    uint64_t* R = (uint64_t*)calloc(num_blocks + 1, sizeof(uint64_t));
     int block, offset;
     for(int i = 0; i < pattern_len; i++){
         block = i / 64;
         offset = i % 64;
         table[pattern_int_array[i]][block] |= (1ULL << offset);
     }
-
+    unsigned long carry;
     for(int i = 0; i < music_len; i++){
-        int char_index = pattern_int_array[i];
-        uint64_t carry = 1;
+        int note_index = map_to_int(music[i]);
+        carry = 1ULL;
         for (int j = 0; j < num_blocks; j++) {
-            unsigned long long prev_carry = carry;
-            carry = (R[i] >> 63) & 1ULL;
-            R[i] = ((R[i] << 1) | prev_carry) & table[char_index][i];
+            R[j] = (R[j] << 1);
+            if(j == num_blocks - 1) R[j] |= 1ULL;
+            carry = (R[j + 1] >> 63);
+            R[j] = (R[j] | carry) & table[note_index][j];
         }
-        if (R[(pattern_len - 1) / 64] & (1ULL << ((pattern_len - 1) % 64))) {
-            printf("pat_len: %d\ni: %d\n", pattern_len, i);
-            return i - pattern_len + 1;  // Retorna posição inicial do casamento
+        int last_block = (pattern_len - 1) / 64;
+        int last_bit = (pattern_len - 1) % 64;
+        if(R[last_block] & (1ULL << last_bit)){
+            for(int i = 0; i < 12; i++) {
+                free(table[i]);
+            }
+            free(table);
+            free(R);
+            return i - pattern_len + 1;
         }
     }
+    for(int i = 0; i < 12; i++){
+       free(table[i]);
+    }
+    free(table);
+    free(R);
     return -1;
 }
 
